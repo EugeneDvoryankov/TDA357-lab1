@@ -88,3 +88,12 @@ CREATE TABLE Taken(
     FOREIGN KEY(student) REFERENCES Students
     FOREIGN KEY(course) REFERENCES Courses
 );
+
+CREATE TABLE WaitingList (
+    student TEXT,
+    course CHAR(6),
+    position SERIAL UNIQUE,
+    PRIMARY KEY(student, course),
+    FOREIGN KEY(student) REFERENCES Students,
+    FOREIGN KEY(course) REFERENCES Limitedcourses,
+);
