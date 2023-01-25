@@ -16,3 +16,28 @@ CREATE OR REPLACE VIEW PassedCourses AS (
   FROM FinishedCourses
   WHERE grade != 'U'
 );
+
+CREATE OR REPLACE VIEW Registrations AS (
+  SELECT student, course, 'waiting' FROM WaitingList
+  UNION
+  SELECT student, course, 'registered' FROM Registered
+);
+
+CREATE OR REPLACE VIEW UnreadMandatory AS (
+  (
+  SELECT student, course
+  FROM Students
+  UNION
+  SELECT course, branch, program
+  FROM MandatoryBranch
+  UNION
+  SELECT course, program 
+  FROM MandatoryProgram
+  )
+  MINUS 
+  SELECT course
+  FROM PassedCourses
+
+
+
+);
