@@ -1,3 +1,15 @@
+\set QUIET true
+SET client_min_messages TO WARNING; -- Less talk please.
+-- This script deletes everything in your database
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+GRANT ALL ON SCHEMA public TO CURRENT_USER;
+-- This line makes psql stop on the first error it encounters
+-- You may want to remove this when running tests that are intended to fail
+\set ON_ERROR_STOP ON
+SET client_min_messages TO NOTICE; -- More talk
+\set QUIET false
+
 CREATE TABLE Students(
     idnr CHAR(10),
     name TEXT NOT NULL,
@@ -41,7 +53,7 @@ CREATE TABLE Classifications(
 CREATE TABLE Classified(
     course CHAR(6),
     classification TEXT,
-    PRIMARY KEY(course, classification)
+    PRIMARY KEY(course, classification),
     FOREIGN KEY(course) REFERENCES Courses,
     FOREIGN KEY(classification) REFERENCES Classifications
 );
@@ -49,7 +61,7 @@ CREATE TABLE Classified(
 CREATE TABLE MandatoryProgram(
     course CHAR(6),
     program TEXT,
-    PRIMARY KEY(course, program)
+    PRIMARY KEY(course, program),
     FOREIGN KEY(course) REFERENCES Courses
 );
 
@@ -57,8 +69,8 @@ CREATE TABLE MandatoryBranch(
     course CHAR(6),
     branch TEXT,
     program TEXT,
-    PRIMARY KEY(course, branch, program)
-    FOREIGN KEY(course) REFERENCES Courses
+    PRIMARY KEY(course, branch, program),
+    FOREIGN KEY(course) REFERENCES Courses,
     FOREIGN KEY(branch, program) REFERENCES Branches
 );
 
@@ -66,16 +78,16 @@ CREATE TABLE RecommendedBranch(
     course CHAR(6),
     branch TEXT,
     program TEXT,
-    PRIMARY KEY(course, branch, program)
-    FOREIGN KEY(course) REFERENCES Courses
+    PRIMARY KEY(course, branch, program),
+    FOREIGN KEY(course) REFERENCES Courses,
     FOREIGN KEY(branch, program) REFERENCES Branches
 );
 
 CREATE TABLE Registered(
     student CHAR(10),
     course CHAR(6),
-    PRIMARY KEY(student, course)
-    FOREIGN KEY(student) REFERENCES Students
+    PRIMARY KEY(student, course),
+    FOREIGN KEY(student) REFERENCES Students,
     FOREIGN KEY(course) REFERENCES Courses
 );
 
@@ -83,17 +95,17 @@ CREATE TABLE Taken(
     student CHAR(10),
     course CHAR(6),
     grade CHAR(1),
-    PRIMARY KEY(student, course)
-    CONSTRAINT okgrade CHECK (grade IN ('U','3','4','5'))
-    FOREIGN KEY(student) REFERENCES Students
+    PRIMARY KEY(student, course),
+    CONSTRAINT okgrade CHECK (grade IN ('U','3','4','5')),
+    FOREIGN KEY(student) REFERENCES Students,
     FOREIGN KEY(course) REFERENCES Courses
 );
 
 CREATE TABLE WaitingList (
     student TEXT,
     course CHAR(6),
-    position SERIAL UNIQUE,
+    position SERIAL NOT NULL,
     PRIMARY KEY(student, course),
     FOREIGN KEY(student) REFERENCES Students,
-    FOREIGN KEY(course) REFERENCES Limitedcourses,
+    FOREIGN KEY(course) REFERENCES Limitedcourses
 );
