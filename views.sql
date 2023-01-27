@@ -17,12 +17,30 @@ CREATE OR REPLACE VIEW PassedCourses AS (
   WHERE grade != 'U'
 );
 
-CREATE OR REPLACE VIEW Registrations AS (
-  SELECT student, course, 'waiting' FROM WaitingList
-  UNION
-  SELECT student, course, 'registered' FROM Registered
+-- Välj (alla kurser som en elev har läst) SNITT (alla kurser en elev måste läsa) = A SNITT B = C
+-- B = (B1 UNION B2)
+-- Alla kurser som man måste läsa i sin program UNION alla kurser man måste läsa i sin master
+-- Välj (alla kurser en måste läsa) FÖRUTOM SNITTET C = B \ C = 
+-- B \ (A snitt B)
+-- som en elev måste läsa och 
+-- 
+CREATE OR REPLACE VIEW MandatoryCourse(
+  SELECT MandatoryBranch.course, MandatoryBranch.branch, MandatoryBranch.program
+  FROM MandatoryBranch
+  FULL OUTER JOIN MandatoryProgram ON (MandatoryBranch.course=MandatoryProgram.course 
+  AND MandatoryBranch.program = MandatoryProgram.program)
 );
 
+
+CREATE OR REPLACE VIEW Registrations AS (
+  SELECT student, course, 'waiting' AS status FROM WaitingList
+  UNION
+  SELECT student, course, 'registered' AS status FROM Registered
+);
+
+-- Step 1: Create a Cartesian product of PassedCourse, MandatoryProgram and MandatoryBranch
+
+/*
 CREATE OR REPLACE VIEW UnreadMandatory AS (
   (
   SELECT student, course
@@ -41,3 +59,4 @@ CREATE OR REPLACE VIEW UnreadMandatory AS (
 
 
 );
+*/
