@@ -17,46 +17,35 @@ CREATE OR REPLACE VIEW PassedCourses AS (
   WHERE grade != 'U'
 );
 
--- Välj (alla kurser som en elev har läst) SNITT (alla kurser en elev måste läsa) = A SNITT B = C
--- B = (B1 UNION B2)
--- Alla kurser som man måste läsa i sin program UNION alla kurser man måste läsa i sin master
--- Välj (alla kurser en måste läsa) FÖRUTOM SNITTET C = B \ C = 
--- B \ (A snitt B)
--- som en elev måste läsa och 
--- 
-CREATE OR REPLACE VIEW MandatoryCourse(
-  SELECT MandatoryBranch.course, MandatoryBranch.branch, MandatoryBranch.program
-  FROM MandatoryBranch
-  FULL OUTER JOIN MandatoryProgram ON (MandatoryBranch.course=MandatoryProgram.course 
-  AND MandatoryBranch.program = MandatoryProgram.program)
-);
-
-
-CREATE OR REPLACE VIEW Registrations AS (
-  SELECT student, course, 'waiting' AS status FROM WaitingList
-  UNION
-  SELECT student, course, 'registered' AS status FROM Registered
-);
-
--- Step 1: Create a Cartesian product of PassedCourse, MandatoryProgram and MandatoryBranch
-
 /*
-CREATE OR REPLACE VIEW UnreadMandatory AS (
-  (
-  SELECT student, course
-  FROM Students
-  UNION
-  SELECT course, branch, program
-  FROM MandatoryBranch
-  UNION
-  SELECT course, program 
-  FROM MandatoryProgram
-  )
-  MINUS 
-  SELECT course
-  FROM PassedCourses
-
-
-
-);
+VIEW MandatoryCourses:
+1.  (Choose all courses a student can read) INTERSECT (All courses a student must read in a BRANCH) 
+    (A cartesian intersect B) 
+2. (Choose all courses a student can read) INTERSECT (All courses a student must read in a PROGRAM)
+    (A cartesian intersect P)
+3.  (Choose all courses a student must read with a branch and within program)
+    (A cartesian intersect B) UNION (A cartesian intersect P)
 */
+CREATE OR REPLACE VIEW MandatoryCourses AS(
+  SELECT BasicInformation.idnr, BasicInformation.branch, BasicInformation.program, course
+  FROM BasicInformation
+  JOIN MandatoryBranch USING (branch, program)
+  UNION
+  SELECT BasicInformation.idnr, BasicInformation.branch, BasicInformation.program, course
+  FROM BasicInformation
+  JOIN MandatoryProgram USING (program)
+);
+
+/**
+Choose all the courses a student must read
+EXCEPT for 
+all the courses a student have passed
+**/
+CREATE OR REPLACE VIEW UnreadMandatory AS (
+  SELECT students.idnr AS student, course
+  FROM Students
+  JOIN MandatoryCourses USING (idnr)
+  EXCEPT
+  SELECT student, course
+  FROM PassedCourses
+);
