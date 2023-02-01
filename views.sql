@@ -17,6 +17,12 @@ CREATE OR REPLACE VIEW PassedCourses AS (
   WHERE grade != 'U'
 );
 
+CREATE OR REPLACE VIEw Registrations AS (
+  SELECT student, course, 'registered' AS status FROM Registered
+  UNION 
+  SELECT student, course, 'waiting' AS status FROM WaitingList
+);
+
 /*
 VIEW MandatoryCourses:
 1.  (Choose all courses a student can read) INTERSECT (All courses a student must read in a BRANCH) 
@@ -48,4 +54,51 @@ CREATE OR REPLACE VIEW UnreadMandatory AS (
   EXCEPT
   SELECT student, course
   FROM PassedCourses
+);
+
+CREATE OR REPLACE VIEW TotalCredits AS (
+  SELECT student, COALESCE(COUNT(credits), 0) AS totalCredits
+  FROM PassedCourses
+  GROUP BY student
+);
+
+CREATE OR REPLACE VIEW MandatoryLeft AS (
+  SELECT student, COALESCE(COUNT(course), 0) AS mandatoryLeft
+  FROM UnreadMandatory
+  GROUP BY student
+);
+
+CREATE OR REPLACE VIEW MathCredits AS (
+  SELECT student, COALESCE(COUNT(credits), 0) AS mathCredits
+  FROM PassedCourses
+  JOIN Classified USING (course)
+  WHERE classification='math'
+  GROUP BY student, classification
+);
+
+CREATE OR REPLACE VIEW ResearchCredits AS (
+  SELECT student, COALESCE(COUNT(credits), 0) AS researchCredits
+  FROM PassedCourses
+  JOIN Classified USING (course)
+  WHERE classification='research'
+  GROUP BY student, classification
+);
+
+CREATE OR REPLACE VIEW SeminarCourses AS (
+  SELECT student, COALESCE(COUNT(course), 0) AS seminarCourses
+  FROM PassedCourses
+  JOIN Classified USING (course)
+  WHERE classification='seminar'
+  GROUP BY student, classification
+);
+
+--PathToGraduation(student, totalCredits, mandatoryLeft, mathCredits, researchCredits, seminarCourses, qualified)
+CREATE OR REPLACE VIEW PathToGraduation AS(
+  SELECT idnr AS student, totalCredits, mandatoryLeft, mathCredits, researchCredits, seminarCourses
+  FROM BasicInformation
+  RIGHT OUTER JOIN TotalCredits ON idnr=TotalCredits.student
+  RIGHT OUTER JOIN MandatoryLeft ON idnr=MandatoryLeft.student
+  RIGHT OUTER JOIN MathCredits ON idnr=MathCredits.student
+  RIGHT OUTER JOIN ResearchCredits ON idnr=ResearchCredits.student
+  RIGHT OUTER JOIN SeminarCourses ON idnr=SeminarCourses.student
 );
